@@ -37,14 +37,25 @@
   (= [1 2 2] (seq (sort (vals (frequencies (map rank hand)))))))
 
 (defn straight? [hand]
-  (let [values (seq (sort (vals (frequencies (map rank hand)))))
+  (let [values (vec (sort (map rank hand)))
         values-with-lower-ace (if (= (last values) 14)
-                                (sort (assoc values 1 14))
+                                (sort (assoc values 4 1))
                                 values)]
-    (or (chain-of-five-numbers values) (chain-of-five-numbers values-with-lower-ace))))
+    (or (chain-of-five-numbers (seq values)) (chain-of-five-numbers (seq values-with-lower-ace)))))
     
 (defn straight-flush? [hand]
   (and (flush? hand) (straight? hand)))
 
+(defn high-card? [hand]
+  true) 
+
+(defn filter-checkers [checkers hand]
+  (filter (fn [[func value]] (func hand)) checkers))
+
 (defn value [hand]
-  nil)
+  (let [checkers #{[high-card? 0]  [pair? 1]
+                 [two-pairs? 2]  [three-of-a-kind? 3]
+                 [straight? 4]   [flush? 5]
+                 [full-house? 6] [four-of-a-kind? 7]
+                 [straight-flush? 8]}]
+    (apply max (map second (filter-checkers checkers hand)))))
